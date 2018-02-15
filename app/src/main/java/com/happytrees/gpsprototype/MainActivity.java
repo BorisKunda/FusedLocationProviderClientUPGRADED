@@ -20,12 +20,15 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
+    //GPS CHECK --!!!!!!!!!!!!!!!!!!!
+    //PERMISSIONS--!!!!!!!!!!!!!!!!!!!
+    //GOOGLE PLAY CHECK--!!!!!!!!!!!!!!!!!!!
+    //CHECK ANDROID 6.0 OR HIGHER IN RUNTIME --!!!!!!!!!!!!!!!!!!!
 
     //VARIABLES
     public FusedLocationProviderClient mFusedLocationClient;
     double latitude, longitude;
     TextView latitudeTV, longitudeTV;
-    Location mLastLocation;
     public LocationCallback mLocationCallback;
     LocationRequest mLocationRequest;
     private boolean mRequestingLocationUpdates = true;//boolean used to track whether the user has turned location updates on or off.
@@ -36,19 +39,52 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //CHECK IF THERE ALREADY WAS  LOCATION PERMISSION GRANTED
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+
         //create an instance of the Fused Location Provider Client
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        //create location request
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);
+        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         //set TextView
         latitudeTV = (TextView) findViewById(R.id.latitudeID);
         longitudeTV = (TextView) findViewById(R.id.longitudeID);
 
+
+        //getting last known location
+
+        mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                // Got last known location. In some rare situations this can be null.
+                if (location != null) {
+                   latitudeTV.setText(" " + location.getLatitude() );
+                   longitudeTV.setText(" " + location.getLongitude());
+                }else{
+                    Log.e("TAG","no location recorded");    //there wasn't recorded location  which can be due to turned off GPS,new device,previously turned off GPS or other reasons
+                }
+            }
+        });
+
         mLocationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {//callback on request location updates by requestLocationUpdates()
                 for (Location location : locationResult.getLocations()) {
-                    // Update UI with location data
-                    // ...
+                    Log.e("TAG"," " + location.getLatitude() + " " + location.getLongitude() );
                 }
             };
         };
@@ -90,21 +126,44 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private void stopLocationUpdates() {
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
     }
+
 }
 
 
 
 
-    //onResume
-    //onPause
-    //there wasn't recorded location  which can be due to turned off GPS,new device,previously turned off GPS or other reasons
+
+
 
 /*
+SAVING STATE
 @Override
 protected void onSaveInstanceState(Bundle outState) {
     outState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY,
             mRequestingLocationUpdates);
     // ...
     super.onSaveInstanceState(outState);
+}
+ */
+/*
+GETTING LAST KNOWN LOCATION
+mFusedLocationClient.getLastLocation()
+        .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                // Got last known location. In some rare situations this can be null.
+                if (location != null) {
+                    // Logic to handle location object
+                }
+            }
+        });
+ */
+/*
+CHANGING SETTINGS
+protected void createLocationRequest() {
+    LocationRequest mLocationRequest = new LocationRequest();
+    mLocationRequest.setInterval(10000);
+    mLocationRequest.setFastestInterval(5000);
+    mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 }
  */
