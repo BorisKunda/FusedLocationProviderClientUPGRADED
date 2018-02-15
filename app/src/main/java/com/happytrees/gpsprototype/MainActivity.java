@@ -27,11 +27,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     //VARIABLES
     public FusedLocationProviderClient mFusedLocationClient;
-    double latitude, longitude;
     TextView latitudeTV, longitudeTV;
     public LocationCallback mLocationCallback;
     LocationRequest mLocationRequest;
-    private boolean mRequestingLocationUpdates = true;//boolean used to track whether the user has turned location updates on or off.
+    private boolean mRequestingLocationUpdates = true;//boolean used to track whether the user has turned location updates on or off.meanwhile we set it true by default
 
 
     @Override
@@ -54,10 +53,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         //create an instance of the Fused Location Provider Client
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        //create location request
+        //create location request + set requirements for it
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setInterval(10000);//10 seconds
+        mLocationRequest.setFastestInterval(5000);//5 seconds
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         //set TextView
@@ -65,8 +64,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         longitudeTV = (TextView) findViewById(R.id.longitudeID);
 
 
-        //getting last known location
-
+        //getting last recorded(cashed) location
         mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
@@ -80,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             }
         });
 
+        //getting result from location update
         mLocationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {//callback on request location updates by requestLocationUpdates()
@@ -94,8 +93,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @Override
     public void onLocationChanged(Location location) {
+        //code
     }
 
+    //request location updates when activity(app) is active
     @Override
     protected void onResume() {
         super.onResume();
@@ -104,25 +105,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         }
     }
 
+    //stop location updates when activity(app) is inactive
     @Override
     protected void onPause() {
         super.onPause();
         stopLocationUpdates();
     }
 
+
+    @SuppressLint("MissingPermission")//tells system to chill out cause there already performed permission check so there no need in additional one
+    //request location updates method
     private void startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null );//requestLocationUpdates() --> Requests location updates with a callback
     }
+    //stop location updates method
     private void stopLocationUpdates() {
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
     }
