@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -17,13 +18,16 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.Manifest;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-public class MainActivity extends AppCompatActivity  {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
+import com.google.android.gms.location.LocationServices;
+
+
+public class MainActivity extends AppCompatActivity {
 
 
     //VARIABLES
@@ -55,7 +59,16 @@ public class MainActivity extends AppCompatActivity  {// interface LocationListe
 
 
         //create an instance of the Fused Location Provider Client
-        // mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);//alternatively you can use Location manager which has different Location Listener
+
+
+        //create location request + set requirements for it
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);//10 seconds . setInterval() - This method sets the rate in milliseconds at which your app prefers to receive location updates.
+        mLocationRequest.setFastestInterval(5000);//5 seconds
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+
 
 
     }
@@ -141,8 +154,6 @@ public class MainActivity extends AppCompatActivity  {// interface LocationListe
             Log.e("GPS", "ENABLED");
         }
     }
-
-
 }
 
 
