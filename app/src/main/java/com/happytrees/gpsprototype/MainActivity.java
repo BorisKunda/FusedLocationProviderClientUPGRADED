@@ -2,9 +2,12 @@ package com.happytrees.gpsprototype;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -28,7 +31,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MainActivity extends AppCompatActivity {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
+public class MainActivity extends AppCompatActivity  {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
     //GPS CHECK --!!!!!!!!!!!!!!!!!!!
 
     //VARIABLES
@@ -54,6 +57,9 @@ public class MainActivity extends AppCompatActivity {// interface LocationListen
 
         //GOOGLE PLAY SERVICES CHECK
         googlePlayCheck();
+
+        //GPS CHECK
+        gpsCheck();
 
 
         //create an instance of the Fused Location Provider Client
@@ -112,7 +118,7 @@ public class MainActivity extends AppCompatActivity {// interface LocationListen
         int available = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(MainActivity.this);
         if (available == ConnectionResult.SUCCESS) {
             //everything is fine and the user can make map requests
-            Log.d("GOOGLE PLAY CHECK ", "isServicesOK: Google Play Services is working");
+            Log.e("GOOGLE PLAY CHECK ", "isServicesOK: Google Play Services is working");
         } else if (GoogleApiAvailability.getInstance().isUserResolvableError(available)) {
             //an error occurred but we can resolve it
             Log.d("GOOGLE PLAY CHECK ", " an error occurred but we can fix it");
@@ -122,6 +128,29 @@ public class MainActivity extends AppCompatActivity {// interface LocationListen
             Toast.makeText(this, "You can't make map requests", Toast.LENGTH_SHORT).show();
         }
     }
+    public void gpsCheck () {
+         LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
+        if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);//dialog warning that gps disabled
+            builder.setMessage("Your GPS seems to be disabled, do you want to enable it?").setCancelable(false).setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                }
+            });
+            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+            builder.show();//don't forget otherwise dialog wont show
+        }else{
+            Log.e("GPS", "ENABLED");
+        }
+    }
+
+
 }
 
 
