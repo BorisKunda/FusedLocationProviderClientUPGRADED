@@ -1,6 +1,7 @@
 package com.happytrees.gpsprototype;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -15,6 +16,9 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.Manifest;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
@@ -24,11 +28,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MainActivity extends AppCompatActivity  {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
+public class MainActivity extends AppCompatActivity {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
     //GPS CHECK --!!!!!!!!!!!!!!!!!!!
-    //PERMISSIONS--!!!!!!!!!!!!!!!!!!!
-    //GOOGLE PLAY CHECK--!!!!!!!!!!!!!!!!!!!
-    //CHECK ANDROID 6.0 OR HIGHER IN RUNTIME --!!!!!!!!!!!!!!!!!!!
 
     //VARIABLES
     public FusedLocationProviderClient mFusedLocationClient;
@@ -44,19 +45,23 @@ public class MainActivity extends AppCompatActivity  {// interface LocationListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //PERMISSIONS CHECK
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)//VERSION_CODES.M = Android 6.0  --> we check if our minimum sdk greater or equal to 6.0 (this when runtime permissions first took place)
         {
             checkLocationPermission();
 
         }
 
+        //GOOGLE PLAY SERVICES CHECK
+        googlePlayCheck();
+
 
         //create an instance of the Fused Location Provider Client
-       // mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        // mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
 
     }
-   ////////////////////////////////////////////////////////////////METHODS//////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////METHODS//////////////////////////////////////////////////////////////////////////////
 
 
     //DON'T ASK ME AGAIN OPTION WILL APPEAR IF USER INITIALLY DECLINED PERMISSION
@@ -72,7 +77,7 @@ public class MainActivity extends AppCompatActivity  {// interface LocationListe
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 //Prompt the user once explanation has been shown
-                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION );
+                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION);
                             }
                         })
                         .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -85,7 +90,7 @@ public class MainActivity extends AppCompatActivity  {// interface LocationListe
                         .show();
             } else {
                 // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION );
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION);
             }
         }
     }
@@ -95,11 +100,26 @@ public class MainActivity extends AppCompatActivity  {// interface LocationListe
         if (requestCode == REQUEST_CODE_LOCATION) {//received permission result for location permission
 
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {// If request is cancelled, the result arrays are empty.
-                // permission was granted, yay! Do the
-                // location-related task you need to do.
-            }else{
-         Log.e("LOCATION PERMISSION","DENIED");
+                Log.e("LOCATION PERMISSION", "GRANTED");
+            } else {
+                Log.e("LOCATION PERMISSION", "DENIED");
             }
+        }
+    }
+
+    public void googlePlayCheck() {
+        Log.d("GOOGLE PLAY CHECK ", "checking google services version");
+        int available = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(MainActivity.this);
+        if (available == ConnectionResult.SUCCESS) {
+            //everything is fine and the user can make map requests
+            Log.d("GOOGLE PLAY CHECK ", "isServicesOK: Google Play Services is working");
+        } else if (GoogleApiAvailability.getInstance().isUserResolvableError(available)) {
+            //an error occurred but we can resolve it
+            Log.d("GOOGLE PLAY CHECK ", " an error occurred but we can fix it");
+            Dialog dialog = GoogleApiAvailability.getInstance().getErrorDialog(MainActivity.this, available, 1);
+            dialog.show();
+        } else {
+            Toast.makeText(this, "You can't make map requests", Toast.LENGTH_SHORT).show();
         }
     }
 }
