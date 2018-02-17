@@ -1,15 +1,20 @@
 package com.happytrees.gpsprototype;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.Manifest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
@@ -19,7 +24,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MainActivity extends AppCompatActivity implements LocationListener {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
+public class MainActivity extends AppCompatActivity  {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
     //GPS CHECK --!!!!!!!!!!!!!!!!!!!
     //PERMISSIONS--!!!!!!!!!!!!!!!!!!!
     //GOOGLE PLAY CHECK--!!!!!!!!!!!!!!!!!!!
@@ -30,7 +35,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     TextView latitudeTV, longitudeTV;
     public LocationCallback mLocationCallback;
     LocationRequest mLocationRequest;
-    private boolean mRequestingLocationUpdates = true;//boolean used to track whether the user has turned location updates on or off.meanwhile we set it true by default
+    public static final int REQUEST_CODE_LOCATION = 4;
+    //private boolean mRequestingLocationUpdates = true;//boolean used to track whether the user has turned location updates on or off.meanwhile we set it true by default
 
 
     @Override
@@ -38,91 +44,64 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //CHECK IF THERE ALREADY WAS  LOCATION PERMISSION GRANTED
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)//VERSION_CODES.M = Android 6.0  --> we check if our minimum sdk greater or equal to 6.0 (this when runtime permissions first took place)
+        {
+            checkLocationPermission();
+
         }
+
 
         //create an instance of the Fused Location Provider Client
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
-        //create location request + set requirements for it
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);//10 seconds
-        mLocationRequest.setFastestInterval(5000);//5 seconds
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        //set TextView
-        latitudeTV = (TextView) findViewById(R.id.latitudeID);
-        longitudeTV = (TextView) findViewById(R.id.longitudeID);
+       // mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
 
-        //getting last recorded(cashed) location
-        mFusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                // Got last known location. In some rare situations this can be null.
-                if (location != null) {
-                   latitudeTV.setText(" " + location.getLatitude() );
-                   longitudeTV.setText(" " + location.getLongitude());
-                }else{
-                    Log.e("TAG","no location recorded");    //there wasn't recorded location  which can be due to turned off GPS,new device,previously turned off GPS or other reasons
-                }
+    }
+   ////////////////////////////////////////////////////////////////METHODS//////////////////////////////////////////////////////////////////////////////
+
+
+    //DON'T ASK ME AGAIN OPTION WILL APPEAR IF USER INITIALLY DECLINED PERMISSION
+    public void checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {//if there wasn't already permission granted
+            // Should we show an explanation?--> we will give user an explanation if user  previously denied permission.How we know if he previously denied it  --> if shouldShowRequestPermissionRationale returned true then we know he previously denied it
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {// shouldShowRequestPermissionRationale() -->  this method returns true if the app has requested this permission previously and the user denied the request.
+                //HERE WE WILL WRITE CODE EXPLAINED WHY GRANTING THIS SPECIFIC PERMISSION IS WORTH IT
+                new AlertDialog.Builder(this)
+                        .setTitle("Location Permission Needed")
+                        .setMessage("This app needs the Location permission, please accept to use location functionality")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //Prompt the user once explanation has been shown
+                                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION );
+                            }
+                        })
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        })
+                        .create()
+                        .show();
+            } else {
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION );
             }
-        });
-
-        //getting result from location update
-        mLocationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {//callback on request location updates by requestLocationUpdates()
-                for (Location location : locationResult.getLocations()) {
-                    Log.e("TAG"," " + location.getLatitude() + " " + location.getLongitude() );
-                }
-            };
-        };
-
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        //code
-    }
-
-    //request location updates when activity(app) is active
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (mRequestingLocationUpdates) {
-            startLocationUpdates();
         }
     }
 
-    //stop location updates when activity(app) is inactive
     @Override
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
-    }
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_CODE_LOCATION) {//received permission result for location permission
 
-
-    @SuppressLint("MissingPermission")//tells system to chill out cause there already performed permission check so there no need in additional one
-    //request location updates method
-    private void startLocationUpdates() {
-        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, null );//requestLocationUpdates() --> Requests location updates with a callback
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {// If request is cancelled, the result arrays are empty.
+                // permission was granted, yay! Do the
+                // location-related task you need to do.
+            }else{
+         Log.e("LOCATION PERMISSION","DENIED");
+            }
+        }
     }
-    //stop location updates method
-    private void stopLocationUpdates() {
-        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
-    }
-
 }
 
 
@@ -139,27 +118,5 @@ protected void onSaveInstanceState(Bundle outState) {
             mRequestingLocationUpdates);
     // ...
     super.onSaveInstanceState(outState);
-}
- */
-/*
-GETTING LAST KNOWN LOCATION
-mFusedLocationClient.getLastLocation()
-        .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                // Got last known location. In some rare situations this can be null.
-                if (location != null) {
-                    // Logic to handle location object
-                }
-            }
-        });
- */
-/*
-CHANGING SETTINGS
-protected void createLocationRequest() {
-    LocationRequest mLocationRequest = new LocationRequest();
-    mLocationRequest.setInterval(10000);
-    mLocationRequest.setFastestInterval(5000);
-    mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 }
  */
