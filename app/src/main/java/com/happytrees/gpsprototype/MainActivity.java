@@ -1,12 +1,10 @@
 package com.happytrees.gpsprototype;
 
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -24,15 +22,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.tasks.OnSuccessListener;
-
 public class MainActivity extends AppCompatActivity  {// interface LocationListener used for receiving notifications from the FusedLocationProviderApi when the location has changed.
-    //GPS CHECK --!!!!!!!!!!!!!!!!!!!
+
 
     //VARIABLES
     public FusedLocationProviderClient mFusedLocationClient;
