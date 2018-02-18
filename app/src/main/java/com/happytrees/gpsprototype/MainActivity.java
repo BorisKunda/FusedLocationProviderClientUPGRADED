@@ -1,5 +1,6 @@
 package com.happytrees.gpsprototype;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -8,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -24,6 +26,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 
@@ -44,11 +47,42 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        //create an instance of the Fused Location Provider Client
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);//alternatively you can use Location manager which has different Location Listener
+
+
+        //create location request + set requirements for it
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(10000);//10 second . setInterval() - This method sets the rate in milliseconds at which your app prefers to receive location updates.
+        mLocationRequest.setFastestInterval(5000);//5 seconds
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+
+        //set TextView
+        latitudeTV = (TextView) findViewById(R.id.latitudeID);
+        longitudeTV = (TextView) findViewById(R.id.longitudeID);
+
+
+        //getting result from location update
+        mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {//callback on request location updates by requestLocationUpdates()
+                for (Location location : locationResult.getLocations()) {
+                    //Log.e("TAG", " " + location.getLatitude() + " " + location.getLongitude());
+                    latitudeTV.setText(" " + location.getLatitude());
+                    longitudeTV.setText(" " + location.getLongitude());
+                }
+            }
+        };
+
         //PERMISSIONS CHECK
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)//VERSION_CODES.M = Android 6.0  --> we check if our minimum sdk greater or equal to 6.0 (this when runtime permissions first took place)
         {
             checkLocationPermission();
 
+        }else{
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
         }
 
         //GOOGLE PLAY SERVICES CHECK
@@ -58,15 +92,8 @@ public class MainActivity extends AppCompatActivity {
         gpsCheck();
 
 
-        //create an instance of the Fused Location Provider Client
-         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);//alternatively you can use Location manager which has different Location Listener
 
 
-        //create location request + set requirements for it
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);//10 seconds . setInterval() - This method sets the rate in milliseconds at which your app prefers to receive location updates.
-        mLocationRequest.setFastestInterval(5000);//5 seconds
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
 
 
@@ -78,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
     //DON'T ASK ME AGAIN OPTION WILL APPEAR IF USER INITIALLY DECLINED PERMISSION
     public void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {//if there wasn't already permission granted
-            // Should we show an explanation?--> we will give user an explanation if user  previously denied permission.How we know if he previously denied it  --> if shouldShowRequestPermissionRationale returned true then we know he previously denied it
+            // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {// shouldShowRequestPermissionRationale() -->  this method returns true if the app has requested this permission previously and the user denied the request.
                 //HERE WE WILL WRITE CODE EXPLAINED WHY GRANTING THIS SPECIFIC PERMISSION IS WORTH IT
                 new AlertDialog.Builder(this)
@@ -99,19 +126,23 @@ public class MainActivity extends AppCompatActivity {
                         })
                         .create()
                         .show();
-            } else {
+            }else{
                 // No explanation needed, we can request the permission.
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_LOCATION);
             }
+        }else{
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());//called if permission was already granted
         }
     }
 
+    @SuppressLint("MissingPermission")//no need in permission check cause one was already performed above
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CODE_LOCATION) {//received permission result for location permission
 
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {// If request is cancelled, the result arrays are empty.
                 Log.e("LOCATION PERMISSION", "GRANTED");
+                mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
             } else {
                 Log.e("LOCATION PERMISSION", "DENIED");
             }
