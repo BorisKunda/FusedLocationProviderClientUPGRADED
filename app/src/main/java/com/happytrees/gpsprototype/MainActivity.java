@@ -185,6 +185,15 @@ public class MainActivity extends AppCompatActivity {
             Log.e("GPS", "ENABLED");
         }
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //stop location updates when Activity is no longer active
+        if (mFusedLocationClient != null) {
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+        }
+    }
 }
 
 
